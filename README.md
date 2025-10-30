@@ -69,7 +69,7 @@ Certifique-se de ter instalado:
 
 6. **Acesse no navegador:**
    ```bash
-   http://localhost:5000
+   http://localhost:3000
 
 ---
 
