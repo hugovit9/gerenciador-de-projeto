@@ -116,7 +116,10 @@ Manipulação de estados e side effects
 
 Integração com APIs simuladas
 
-Organização de pastas e boas práticas de código
-
 ---
+
+📸 Preview
+
+
+![Image](https://github.com/user-attachments/assets/ab921783-701f-43ab-91be-7c5abb11052a)
 
