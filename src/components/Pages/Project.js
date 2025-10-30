@@ -6,14 +6,14 @@ import Container from '../layout/Container'
 import ProjectForm from '../Projects/ProjectForm'
 import Message from '../layout/Message'
 import ServiceForm from '../Services/ServiceForm'
-import {parse, v4 as uuidv4} from 'uuid'
+import { v4 as uuidv4 } from 'uuid'
 import ServiceCard from '../Services/ServiceCard'
 
 
 function Project(){
-const {id} = useParams()
+    const {id} = useParams()
 
-    const [project, setProject] = useState([])
+    const [project, setProject] = useState({}) // Alterado para objeto vazio
     const [showProjectForm, setShowProjectForm] = useState(false)
     const [message, setMessage] = useState()
     const [type, setType] = useState()
@@ -21,6 +21,7 @@ const {id} = useParams()
     const [services, setServices] = useState([])
 
     useEffect(() =>{
+        // Aumentei o tempo do setTimeout, mas o ideal é remover o setTimeout em produção
         setTimeout(() => {
             fetch(`http://localhost:5000/projects/${id}`,{
             method: 'GET',
@@ -29,26 +30,31 @@ const {id} = useParams()
         }).then((resp)=> resp.json())
             .then((data) =>{
                 setProject(data)
-                setServices(data.services)
+                setServices(data.services || []) // Garante que services é no mínimo um array vazio
             })
-
         .catch((err) => console.log(err))
-        }, 3000);
+        }, 300) // Reduzi para 300ms para teste
     }, [id])
 
     function toggleProjectForm(){
         setShowProjectForm(!showProjectForm)
     }
 
-     function toggleServiceForm(){
+    function toggleServiceForm(){
         setShowServiceForm(!showServiceForm)
     }
 
     function removeService(id, cost){
+        // Adiciona verificação de segurança antes de tentar acessar 'services'
+        if (!project.services) {
+            console.log("project.services está undefined.")
+            return
+        }
+
         const servicesUpdated = project.services.filter(
             (service) => service.id !== id)
 
-        const projectUpdated = project
+        const projectUpdated = { ...project } // Cria uma cópia para evitar mutação direta
 
         projectUpdated.services = servicesUpdated
         projectUpdated.cost = parseFloat(projectUpdated.cost) - parseFloat(cost)
@@ -60,7 +66,7 @@ const {id} = useParams()
             },
             body: JSON.stringify(projectUpdated),
         }).then((resp) => resp.json())
-        .then((data) => {
+        .then(() => {
             setProject(projectUpdated)
             setServices(servicesUpdated)
             setMessage('Serviço removido com sucesso!')
@@ -70,38 +76,45 @@ const {id} = useParams()
     }
 
     function createService(project) {
-  if (!project.services) {
-    project.services = []
-  }
+        if (!project.services) {
+            project.services = []
+        }
 
-  const lastService = project.services[project.services.length - 1]
-  lastService.id = uuidv4()
+        // Adiciona uma verificação para garantir que o array não está vazio antes de acessar o último
+        if (project.services.length === 0) {
+            setMessage('O serviço não foi adicionado corretamente ao projeto.')
+            setType('error')
+            return false
+        }
 
-  const lastServiceCost = parseFloat(lastService.cost)
-  const newCost = parseFloat(project.cost) + lastServiceCost
+        const lastService = project.services[project.services.length - 1] // Correção de segurança aplicada
+        lastService.id = uuidv4()
 
-  if (newCost > parseFloat(project.budget)) {
-    setMessage('Orçamento ultrapassado, verifique o valor do serviço')
-    setType('error')
-    project.services.pop()
-    return false
-  }
+        const lastServiceCost = parseFloat(lastService.cost)
+        const newCost = parseFloat(project.cost) + lastServiceCost
 
+        if (newCost > parseFloat(project.budget)) {
+            setMessage('Orçamento ultrapassado, verifique o valor do serviço')
+            setType('error')
+            project.services.pop()
+            return false
+        }
 
-  fetch(`http://localhost:5000/projects/${project.id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...project, cost: newCost }),
-  })
-    .then((resp) => resp.json())
-    .then((data) => {
-      setProject(data)
-      setShowServiceForm(false)
-      setMessage('Serviço adicionado com sucesso!')
-      setType('success')
-    })
-    .catch((err) => console.log(err))
-}
+        fetch(`http://localhost:5000/projects/${project.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...project, cost: newCost }),
+        })
+        .then((resp) => resp.json())
+        .then((data) => {
+            setProject(data)
+            setShowServiceForm(false)
+            setMessage('Serviço adicionado com sucesso!')
+            setType('success')
+        })
+        .catch((err) => console.log(err))
+    }
+
     function editPost(project){
         setMessage('')
         
@@ -110,6 +123,7 @@ const {id} = useParams()
             setType('error')
             return false
         }
+        
         fetch(`http://localhost:5000/projects/${project.id}`,{
             method:'PATCH',
             headers:{
@@ -117,14 +131,14 @@ const {id} = useParams()
             },
             body: JSON.stringify(project),
         })
-       .then((resp) => resp.json())
-       .then((data) => {
-        setProject(data)
-        setShowProjectForm(false)
-        setMessage('Projeto atualizado!')
-        setType('success')
-        setShowProjectForm(false)
-       }).catch((err) => console.log(err))
+        .then((resp) => resp.json())
+        .then((data) => {
+            setProject(data)
+            setShowProjectForm(false)
+            setMessage('Projeto atualizado!')
+            setType('success')
+            setShowProjectForm(false)
+        }).catch((err) => console.log(err))
     }
 
     return(
@@ -139,7 +153,7 @@ const {id} = useParams()
                     {!showProjectForm ? (
                         <div className={styles.project_info}> 
                             <p>
-                                <span>Categoria: </span> {project.category.name}
+                                <span>Categoria: </span> {project.category?.name}
                             </p>
                             <p>
                                 <span>Total de Orçamento: </span> R$: {project.budget}
@@ -169,7 +183,7 @@ const {id} = useParams()
                     </div>
                     <h2>Serviços</h2>
                     <Container customClass="start" >
-                       {services.length > 0 &&
+                        {services.length > 0 &&
                         services.map((service) => (
                             <ServiceCard
                             id={service.id}
@@ -179,10 +193,10 @@ const {id} = useParams()
                             key={service.id}
                             handleRemove={removeService}></ServiceCard>
                         ))
-                       }
-                       {services.length === 0 && <p>Não há serviços cadastrados.</p>
+                        }
+                        {services.length === 0 && <p>Não há serviços cadastrados.</p>
 
-                       }
+                        }
                     </Container>
                 </Container>
             </div> 
