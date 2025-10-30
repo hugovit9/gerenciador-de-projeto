@@ -75,20 +75,20 @@ Certifique-se de ter instalado:
 
 ## 📁 Estrutura de Pastas
 
-📦 cost
-├── 📁 public
-├── 📁 src
-│   ├── 📁 components
-│   │   ├── 📁 Form
-│   │   ├── 📁 Layout
-│   │   ├── 📁 Pages
-│   │   ├── 📁 Projects
-│   │   ├── 📁 Services
-│   ├── App.js
-│   ├── index.js
-│   ├── index.css
-│   └── db.json
-└── README.md
+📦 cost <br>
+├── 📁 public <br>
+├── 📁 src <br>
+│   ├── 📁 components <br>
+│   │   ├── 📁 Form <br>
+│   │   ├── 📁 Layout <br>
+│   │   ├── 📁 Pages <br>
+│   │   ├── 📁 Projects <br>
+│   │   ├── 📁 Services <br>
+│   ├── App.js <br>
+│   ├── index.js <br>
+│   ├── index.css <br>
+│   └── db.json <br>
+└── README.md <br>
 
 ---
 
